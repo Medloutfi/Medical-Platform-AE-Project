@@ -47,8 +47,8 @@
       "image": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400",
       "available": true,
       "phone": "+212 6 12 34 56 78",
-      "lat": 33.5750,
-      "lng": -7.5950
+      "lat": 33.575,
+      "lng": -7.595
     }
   ],
   "interventions": [
@@ -64,7 +64,8 @@
       "lat": 33.5731,
       "lng": -7.5898,
       "urgency": false,
-      "status": "pending"
+      "status": "accepted",
+      "doctorId": 1
     },
     {
       "id": 4,
@@ -80,6 +81,34 @@
       "urgency": false,
       "status": "completed",
       "doctorId": 1
+    },
+    {
+      "id": 1777388497124,
+      "patientName": "Ahmed Tazi",
+      "patientId": 1,
+      "type": "Consultation générale",
+      "description": "walo",
+      "date": "2026-04-28",
+      "time": "16:00",
+      "address": "12 Hay EL Fath",
+      "lat": 32.21778214945929,
+      "lng": -7.935718990183717,
+      "urgency": false,
+      "status": "pending"
+    },
+    {
+      "id": 1777388556326,
+      "patientName": "Ahmed Tazi",
+      "patientId": 1,
+      "type": "Pansement",
+      "description": "dfdsfgfdg",
+      "date": "2026-04-30",
+      "time": "16:02",
+      "address": "fsdgfdg",
+      "lat": 33.5731,
+      "lng": -7.5898,
+      "urgency": false,
+      "status": "pending"
     }
   ],
   "appointments": [
@@ -120,22 +149,81 @@
     }
   ],
   "chartData": [
-    { "id": "Lun", "day": "Lun", "interventions": 0, "appointments": 0 },
-    { "id": "Mar", "day": "Mar", "interventions": 1, "appointments": 0 },
-    { "id": "Mer", "day": "Mer", "interventions": 0, "appointments": 1 },
-    { "id": "Jeu", "day": "Jeu", "interventions": 0, "appointments": 0 },
-    { "id": "Ven", "day": "Ven", "interventions": 0, "appointments": 0 },
-    { "id": "Sam", "day": "Sam", "interventions": 0, "appointments": 0 },
-    { "id": "Dim", "day": "Dim", "interventions": 0, "appointments": 0 }
+    {
+      "id": "Lun",
+      "day": "Lun",
+      "interventions": 0,
+      "appointments": 0
+    },
+    {
+      "id": "Mar",
+      "day": "Mar",
+      "interventions": 1,
+      "appointments": 0
+    },
+    {
+      "id": "Mer",
+      "day": "Mer",
+      "interventions": 0,
+      "appointments": 1
+    },
+    {
+      "id": "Jeu",
+      "day": "Jeu",
+      "interventions": 0,
+      "appointments": 0
+    },
+    {
+      "id": "Ven",
+      "day": "Ven",
+      "interventions": 0,
+      "appointments": 0
+    },
+    {
+      "id": "Sam",
+      "day": "Sam",
+      "interventions": 0,
+      "appointments": 0
+    },
+    {
+      "id": "Dim",
+      "day": "Dim",
+      "interventions": 0,
+      "appointments": 0
+    }
   ],
   "careTypes": [
-    { "id": 1, "name": "Consultation générale" },
-    { "id": 2, "name": "Prise de sang" },
-    { "id": 3, "name": "Injection" },
-    { "id": 4, "name": "Pansement" },
-    { "id": 5, "name": "Contrôle post-opératoire" },
-    { "id": 6, "name": "Vaccination" },
-    { "id": 7, "name": "Perfusion" },
-    { "id": 8, "name": "Kiné à domicile" }
+    {
+      "id": 1,
+      "name": "Consultation générale"
+    },
+    {
+      "id": 2,
+      "name": "Prise de sang"
+    },
+    {
+      "id": 3,
+      "name": "Injection"
+    },
+    {
+      "id": 4,
+      "name": "Pansement"
+    },
+    {
+      "id": 5,
+      "name": "Contrôle post-opératoire"
+    },
+    {
+      "id": 6,
+      "name": "Vaccination"
+    },
+    {
+      "id": 7,
+      "name": "Perfusion"
+    },
+    {
+      "id": 8,
+      "name": "Kiné à domicile"
+    }
   ]
 }
