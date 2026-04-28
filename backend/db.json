@@ -1,0 +1,330 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "admin1",
+      "password": "password",
+      "role": "admin",
+      "name": "Admin"
+    },
+    {
+      "id": 2,
+      "username": "doctor1",
+      "password": "password",
+      "role": "doctor",
+      "name": "Dr. Sarah Alami",
+      "doctorId": 1
+    },
+    {
+      "id": 3,
+      "username": "patient1",
+      "password": "password",
+      "role": "patient",
+      "name": "Ahmed Tazi",
+      "patientId": 1
+    },
+    {
+      "id": 4,
+      "username": "doctor2",
+      "password": "password",
+      "role": "doctor",
+      "name": "Dr. Mehdi Benali",
+      "doctorId": 2
+    },
+    {
+      "id": 5,
+      "username": "doctor3",
+      "password": "password",
+      "role": "doctor",
+      "name": "Dr. Fatima Ziani",
+      "doctorId": 3
+    },
+    {
+      "id": 6,
+      "username": "patient2",
+      "password": "password",
+      "role": "patient",
+      "name": "Leila Benjelloun",
+      "patientId": 2
+    },
+    {
+      "id": 7,
+      "username": "patient3",
+      "password": "password",
+      "role": "patient",
+      "name": "Omar Chraibi",
+      "patientId": 3
+    }
+  ],
+  "clinics": [
+    {
+      "id": 1,
+      "name": "Clinique Centrale",
+      "address": "15 Rue de la Santé, Casablanca",
+      "specialty": "Général",
+      "rating": 4.8,
+      "image": "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=400",
+      "lat": 33.5731,
+      "lng": -7.5898
+    },
+    {
+      "id": 2,
+      "name": "Cabinet Cardio Plus",
+      "address": "28 Boulevard Hassan II, Rabat",
+      "specialty": "Cardiologie",
+      "rating": 4.9,
+      "image": "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=400",
+      "lat": 34.0209,
+      "lng": -6.8416
+    },
+    {
+      "id": 3,
+      "name": "Centre Pédiatrique",
+      "address": "42 Avenue Mohammed V, Marrakech",
+      "specialty": "Pédiatrie",
+      "rating": 4.7,
+      "image": "https://images.unsplash.com/photo-1551076805-e1869033e561?w=400",
+      "lat": 31.6295,
+      "lng": -7.9811
+    }
+  ],
+  "doctors": [
+    {
+      "id": 1,
+      "name": "Dr. Sarah Alami",
+      "specialty": "Médecin généraliste",
+      "clinicId": 1,
+      "rating": 4.9,
+      "experience": "15 ans",
+      "image": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400",
+      "available": true,
+      "phone": "+212 6 12 34 56 78",
+      "lat": 33.5750,
+      "lng": -7.5950
+    },
+    {
+      "id": 2,
+      "name": "Dr. Mehdi Benali",
+      "specialty": "Cardiologue",
+      "clinicId": 2,
+      "rating": 4.8,
+      "experience": "12 ans",
+      "image": "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400",
+      "available": true,
+      "phone": "+212 6 22 33 44 55",
+      "lat": 33.5680,
+      "lng": -7.5820
+    },
+    {
+      "id": 3,
+      "name": "Dr. Fatima Ziani",
+      "specialty": "Pédiatre",
+      "clinicId": 3,
+      "rating": 5.0,
+      "experience": "8 ans",
+      "image": "https://images.unsplash.com/photo-1594824476967-48c8b964ac31?w=400",
+      "available": true,
+      "phone": "+212 6 33 44 55 66",
+      "lat": 33.5800,
+      "lng": -7.6100
+    },
+    {
+      "id": 4,
+      "name": "Dr. Karim El Fassi",
+      "specialty": "Dermatologue",
+      "clinicId": 1,
+      "rating": 4.7,
+      "experience": "10 ans",
+      "image": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400",
+      "available": false,
+      "phone": "+212 6 44 55 66 77",
+      "lat": 33.5710,
+      "lng": -7.5870
+    }
+  ],
+  "interventions": [
+    {
+      "id": 1,
+      "patientName": "Ahmed Tazi",
+      "patientId": 1,
+      "type": "Prise de sang",
+      "description": "Analyse sanguine complète pour suivi diabète",
+      "date": "2026-04-28",
+      "time": "10:00",
+      "address": "12 Rue Atlas, Casablanca",
+      "lat": 33.5731,
+      "lng": -7.5898,
+      "urgency": false,
+      "status": "pending"
+    },
+    {
+      "id": 2,
+      "patientName": "Leila Benjelloun",
+      "patientId": 2,
+      "type": "Injection",
+      "description": "Injection d'insuline et contrôle glycémique",
+      "date": "2026-04-28",
+      "time": "11:30",
+      "address": "45 Boulevard Zerktouni, Casablanca",
+      "lat": 33.5890,
+      "lng": -7.6200,
+      "urgency": true,
+      "status": "pending",
+      "doctorId": null
+    },
+    {
+      "id": 3,
+      "patientName": "Omar Chraibi",
+      "patientId": 3,
+      "type": "Pansement",
+      "description": "Changement de pansement post-opératoire",
+      "date": "2026-04-28",
+      "time": "14:00",
+      "address": "78 Rue de Fès, Casablanca",
+      "lat": 33.5650,
+      "lng": -7.5750,
+      "urgency": false,
+      "status": "accepted",
+      "doctorId": 1
+    },
+    {
+      "id": 4,
+      "patientName": "Ahmed Tazi",
+      "patientId": 1,
+      "type": "Consultation générale",
+      "description": "Consultation de routine avec bilan général",
+      "date": "2026-04-25",
+      "time": "09:00",
+      "address": "12 Rue Atlas, Casablanca",
+      "lat": 33.5731,
+      "lng": -7.5898,
+      "urgency": false,
+      "status": "completed",
+      "doctorId": 1
+    },
+    {
+      "id": 5,
+      "patientName": "Leila Benjelloun",
+      "patientId": 2,
+      "type": "Vaccination",
+      "description": "Rappel vaccin grippe saisonnière",
+      "date": "2026-04-22",
+      "time": "15:00",
+      "address": "45 Boulevard Zerktouni, Casablanca",
+      "lat": 33.5890,
+      "lng": -7.6200,
+      "urgency": false,
+      "status": "completed",
+      "doctorId": 2
+    }
+  ],
+  "appointments": [
+    {
+      "id": 1,
+      "patientName": "Ahmed Tazi",
+      "patientId": 1,
+      "doctorId": 1,
+      "clinicId": 1,
+      "date": "2026-04-29",
+      "time": "09:00",
+      "status": "confirmed",
+      "reason": "Suivi tension artérielle"
+    },
+    {
+      "id": 2,
+      "patientName": "Leila Benjelloun",
+      "patientId": 2,
+      "doctorId": 2,
+      "clinicId": 2,
+      "date": "2026-04-29",
+      "time": "10:30",
+      "status": "confirmed",
+      "reason": "Bilan cardiaque annuel"
+    },
+    {
+      "id": 3,
+      "patientName": "Omar Chraibi",
+      "patientId": 3,
+      "doctorId": 1,
+      "clinicId": 1,
+      "date": "2026-04-30",
+      "time": "14:00",
+      "status": "pending",
+      "reason": "Consultation post-opératoire"
+    }
+  ],
+  "patients": [
+    {
+      "id": 1,
+      "name": "Ahmed Tazi",
+      "email": "ahmed.tazi@email.com",
+      "phone": "+212 6 11 22 33 44",
+      "address": "12 Rue Atlas, Casablanca",
+      "age": 45,
+      "gender": "Homme",
+      "lat": 33.5731,
+      "lng": -7.5898
+    },
+    {
+      "id": 2,
+      "name": "Leila Benjelloun",
+      "email": "leila.benj@email.com",
+      "phone": "+212 6 22 33 44 55",
+      "address": "45 Boulevard Zerktouni, Casablanca",
+      "age": 34,
+      "gender": "Femme",
+      "lat": 33.5890,
+      "lng": -7.6200
+    },
+    {
+      "id": 3,
+      "name": "Omar Chraibi",
+      "email": "omar.chraibi@email.com",
+      "phone": "+212 6 33 44 55 66",
+      "address": "78 Rue de Fès, Casablanca",
+      "age": 28,
+      "gender": "Homme",
+      "lat": 33.5650,
+      "lng": -7.5750
+    }
+  ],
+  "drivers": [
+    {
+      "id": 1,
+      "name": "Hassan Marouani",
+      "phone": "+212 6 44 55 66 77",
+      "status": "available",
+      "vehicle": "Ambulance A123",
+      "lat": 33.5731,
+      "lng": -7.5898
+    },
+    {
+      "id": 2,
+      "name": "Rachid Bouazza",
+      "phone": "+212 6 55 66 77 88",
+      "status": "busy",
+      "vehicle": "Ambulance B456",
+      "lat": 33.5891,
+      "lng": -7.6031
+    }
+  ],
+  "chartData": [
+    { "id": "Lun", "day": "Lun", "interventions": 12, "appointments": 18 },
+    { "id": "Mar", "day": "Mar", "interventions": 15, "appointments": 22 },
+    { "id": "Mer", "day": "Mer", "interventions": 8, "appointments": 15 },
+    { "id": "Jeu", "day": "Jeu", "interventions": 18, "appointments": 25 },
+    { "id": "Ven", "day": "Ven", "interventions": 20, "appointments": 28 },
+    { "id": "Sam", "day": "Sam", "interventions": 10, "appointments": 12 },
+    { "id": "Dim", "day": "Dim", "interventions": 5, "appointments": 8 }
+  ],
+  "careTypes": [
+    { "id": 1, "name": "Consultation générale" },
+    { "id": 2, "name": "Prise de sang" },
+    { "id": 3, "name": "Injection" },
+    { "id": 4, "name": "Pansement" },
+    { "id": 5, "name": "Contrôle post-opératoire" },
+    { "id": 6, "name": "Vaccination" },
+    { "id": 7, "name": "Perfusion" },
+    { "id": 8, "name": "Kiné à domicile" }
+  ]
+}
