@@ -19,8 +19,8 @@ export default function PatientHome() {
       try {
         const interventions = await api.get<any[]>('/interventions');
         const appointments = await api.get<any[]>('/appointments');
-        setMyInterventions(interventions.slice(0, 3));
-        setMyAppointments(appointments.slice(0, 3));
+        setMyInterventions(interventions);
+        setMyAppointments(appointments);
       } catch (error) {
         console.error("Failed to fetch data:", error);
       }
@@ -68,7 +68,7 @@ export default function PatientHome() {
           />
           <StatCard
             title="Interventions terminées"
-            value={8}
+            value={myInterventions.filter(i => i.status === 'completed').length}
             icon={CheckCircle}
             iconBgColor="bg-violet-100"
             iconColor="text-violet-600"
@@ -95,7 +95,7 @@ export default function PatientHome() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {myInterventions.map((intervention) => (
+                {myInterventions.slice(0, 3).map((intervention) => (
                   <div key={intervention.id} className="p-4 border border-slate-100 rounded-xl hover:shadow-md hover:border-slate-200 transition-all group">
                     <div className="flex justify-between items-start mb-2">
                       <div>
@@ -129,7 +129,7 @@ export default function PatientHome() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {myAppointments.map((appointment) => (
+                {myAppointments.slice(0, 3).map((appointment) => (
                   <div key={appointment.id} className="p-4 border border-slate-100 rounded-xl hover:shadow-md hover:border-slate-200 transition-all group">
                     <div className="flex justify-between items-start mb-2">
                       <div>

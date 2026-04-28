@@ -14,14 +14,22 @@ export default function DoctorHome() {
   const [isAvailable, setIsAvailable] = useState(true);
   const navigate = useNavigate();
   const [interventions, setInterventions] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [doctorProfile, setDoctorProfile] = useState<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const invs = await api.get<any[]>('/interventions');
+        const [invs, apps, docs] = await Promise.all([
+          api.get<any[]>('/interventions'),
+          api.get<any[]>('/appointments'),
+          api.get<any[]>('/doctors')
+        ]);
         setInterventions(invs);
+        setAppointments(apps);
+        setDoctorProfile(docs[0]);
       } catch (error) {
-        console.error("Failed to load interventions:", error);
+        console.error("Failed to load data:", error);
       }
     };
     fetchData();
@@ -83,7 +91,7 @@ export default function DoctorHome() {
           />
           <StatCard
             title="RDV aujourd'hui"
-            value={3}
+            value={appointments.length}
             icon={Calendar}
             iconBgColor="bg-emerald-100"
             iconColor="text-emerald-600"
@@ -91,7 +99,7 @@ export default function DoctorHome() {
           />
           <StatCard
             title="Consultations ce mois"
-            value={47}
+            value={interventions.filter(i => i.status === "completed").length}
             icon={CheckCircle}
             iconBgColor="bg-violet-100"
             iconColor="text-violet-600"
@@ -116,13 +124,13 @@ export default function DoctorHome() {
                   )}
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-slate-900">Dr. Sarah Alami</h3>
-                  <p className="text-slate-500 mb-3">Médecin généraliste</p>
+                  <h3 className="text-xl font-bold text-slate-900">{doctorProfile?.name || "Dr. Sarah Alami"}</h3>
+                  <p className="text-slate-500 mb-3">{doctorProfile?.specialty || "Médecin généraliste"}</p>
                   <div className="flex gap-2 flex-wrap">
                     <Badge className={isAvailable ? "bg-emerald-100 text-emerald-700 border-0" : "bg-slate-100 text-slate-600 border-0"}>
                       {isAvailable ? "✓ Disponible" : "Occupé(e)"}
                     </Badge>
-                    <Badge variant="outline" className="border-slate-200 text-slate-600">15 ans d'expérience</Badge>
+                    <Badge variant="outline" className="border-slate-200 text-slate-600">{doctorProfile?.experience || "0 ans"} d'expérience</Badge>
                   </div>
                 </div>
               </div>
@@ -130,11 +138,11 @@ export default function DoctorHome() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-5 rounded-2xl">
                   <p className="text-sm text-slate-500 mb-1">Note moyenne</p>
-                  <p className="text-3xl font-bold text-blue-600">4.9</p>
+                  <p className="text-3xl font-bold text-blue-600">{doctorProfile?.rating || "0.0"}</p>
                 </div>
                 <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-5 rounded-2xl">
                   <p className="text-sm text-slate-500 mb-1">Patients traités</p>
-                  <p className="text-3xl font-bold text-emerald-600">1,247</p>
+                  <p className="text-3xl font-bold text-emerald-600">{new Set(interventions.filter(i => i.status === 'completed').map(i => i.patientId)).size}</p>
                 </div>
               </div>
             </CardContent>

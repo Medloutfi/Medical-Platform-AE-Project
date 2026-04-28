@@ -14,6 +14,7 @@ import AdminTracking from "./pages/admin/AdminTracking";
 import AdminDoctors from "./pages/admin/AdminDoctors";
 import AdminPatients from "./pages/admin/AdminPatients";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import Settings from "./pages/Settings";
 
 export const router = createBrowserRouter([
   {
@@ -75,5 +76,9 @@ export const router = createBrowserRouter([
   {
     path: "/admin/analytics",
     Component: AdminAnalytics,
+  },
+  {
+    path: "/settings",
+    Component: Settings,
   },
 ]);

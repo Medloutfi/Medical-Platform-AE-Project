@@ -8,12 +8,17 @@ import { api } from "../../services/api";
 
 export default function DoctorHistory() {
   const [completedInterventions, setCompletedInterventions] = useState<any[]>([]);
+  const [doctorProfile, setDoctorProfile] = useState<any>(null);
 
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const invs = await api.get<any[]>('/interventions');
+        const [invs, docs] = await Promise.all([
+          api.get<any[]>('/interventions'),
+          api.get<any[]>('/doctors')
+        ]);
         setCompletedInterventions(invs.filter(i => i.status === "completed"));
+        setDoctorProfile(docs[0]);
       } catch (error) {
         console.error("Failed to load history:", error);
       }
@@ -21,12 +26,22 @@ export default function DoctorHistory() {
     fetchHistory();
   }, []);
 
-  const performanceData = [
-    { month: "Jan", consultations: 35, rating: 4.8 },
-    { month: "Fév", consultations: 42, rating: 4.9 },
-    { month: "Mar", consultations: 47, rating: 4.9 },
-    { month: "Avr", consultations: 52, rating: 4.95 }
-  ];
+  // Compute performanceData from completed interventions based on date
+  const monthlyStats = completedInterventions.reduce((acc: any, inv) => {
+    const month = new Date(inv.date).toLocaleString('fr-FR', { month: 'short' });
+    if (!acc[month]) {
+      acc[month] = { month, consultations: 0, rating: doctorProfile?.rating || 0 };
+    }
+    acc[month].consultations += 1;
+    return acc;
+  }, {});
+  
+  const performanceData = Object.values(monthlyStats);
+
+  const totalInterventions = completedInterventions.length;
+  const patientsTraites = new Set(completedInterventions.map(i => i.patientId)).size;
+  const noteMoyenne = doctorProfile?.rating || "0";
+  const anneesExp = doctorProfile?.experience ? doctorProfile.experience.split(' ')[0] : "0";
 
   return (
     <DashboardLayout role="doctor" userName="Dr. Sarah Alami" notificationCount={2}>
@@ -38,10 +53,10 @@ export default function DoctorHistory() {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-5 stagger-children">
           {[
-            { icon: TrendingUp, label: "Total interventions", value: "124", gradient: "from-blue-500 to-cyan-500" },
-            { icon: Users, label: "Patients traités", value: "1,247", gradient: "from-emerald-500 to-teal-500" },
-            { icon: Award, label: "Note moyenne", value: "4.9", gradient: "from-amber-500 to-orange-500" },
-            { icon: Clock, label: "Années d'exp.", value: "15", gradient: "from-violet-500 to-purple-500" },
+            { icon: TrendingUp, label: "Total interventions", value: totalInterventions, gradient: "from-blue-500 to-cyan-500" },
+            { icon: Users, label: "Patients traités", value: patientsTraites, gradient: "from-emerald-500 to-teal-500" },
+            { icon: Award, label: "Note moyenne", value: noteMoyenne, gradient: "from-amber-500 to-orange-500" },
+            { icon: Clock, label: "Années d'exp.", value: anneesExp, gradient: "from-violet-500 to-purple-500" },
           ].map((stat, idx) => (
             <Card key={idx} className={`border-0 shadow-xl bg-gradient-to-br ${stat.gradient} text-white overflow-hidden relative`}>
               <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.06%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E')]" />

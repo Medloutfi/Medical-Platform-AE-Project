@@ -40,12 +40,13 @@ export default function AdminDashboard() {
   const pendingRequests = interventions.filter(i => i.status === "pending").length;
   const availableDoctors = doctors.filter(d => d.available).length;
   
-  const recentActivity = [
-    { id: 1, type: "Nouvelle intervention", patient: "Ahmed Tazi", time: "Il y a 5 min", status: "pending" },
-    { id: 2, type: "RDV confirmé", patient: "Leila Benjelloun", time: "Il y a 12 min", status: "confirmed" },
-    { id: 3, type: "Intervention terminée", patient: "Omar Chraibi", time: "Il y a 23 min", status: "completed" },
-    { id: 4, type: "Nouveau médecin", patient: "Dr. Karim El Fassi", time: "Il y a 1h", status: "info" }
-  ];
+  const recentActivity = interventions.slice(-4).reverse().map((inv: any, index: number) => ({
+    id: index + 1,
+    type: inv.status === 'completed' ? 'Intervention terminée' : 'Demande d\'intervention',
+    patient: inv.patientName,
+    time: inv.date,
+    status: inv.status
+  }));
 
   const getActivityColor = (status: string) => {
     const colors: Record<string, string> = {

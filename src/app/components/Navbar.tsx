@@ -3,6 +3,7 @@ import { Badge } from "./ui/badge";
 import { MobileSidebar } from "./MobileSidebar";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 
 interface NavbarProps {
   userName: string;
@@ -46,13 +47,19 @@ export function Navbar({ userName, role, notificationCount = 0 }: NavbarProps) {
 
         <div className="flex items-center gap-2 lg:gap-3">
           {/* Search */}
-          <button className="p-2.5 hover:bg-slate-100 rounded-xl transition-colors hidden md:flex">
+          <button 
+            onClick={() => toast.info("Fonctionnalité de recherche non implémentée")}
+            className="p-2.5 hover:bg-slate-100 rounded-xl transition-colors hidden md:flex"
+          >
             <Search className="w-5 h-5 text-slate-500" />
           </button>
 
           {/* Notifications */}
           <div className="relative">
-            <button className="p-2.5 hover:bg-slate-100 rounded-xl transition-colors relative">
+            <button 
+              onClick={() => toast.info(`Vous avez ${notificationCount} nouvelle(s) notification(s)`)}
+              className="p-2.5 hover:bg-slate-100 rounded-xl transition-colors relative"
+            >
               <Bell className="w-5 h-5 text-slate-600" />
               {notificationCount > 0 && (
                 <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-gradient-to-br from-red-500 to-rose-600 border-2 border-white animate-bounce-in">
@@ -67,11 +74,18 @@ export function Navbar({ userName, role, notificationCount = 0 }: NavbarProps) {
 
           {/* Profile */}
           <div className="flex items-center gap-3">
-            <div className="text-right hidden sm:block">
+            <div 
+              className="text-right hidden sm:block cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => navigate("/settings")}
+            >
               <p className="text-sm font-semibold text-slate-800">{userName}</p>
               <p className="text-xs text-slate-500 capitalize">{role}</p>
             </div>
-            <div className={`w-10 h-10 bg-gradient-to-br ${roleColors[role]} rounded-xl flex items-center justify-center shadow-md`}>
+            <div 
+              className={`w-10 h-10 bg-gradient-to-br ${roleColors[role]} rounded-xl flex items-center justify-center shadow-md cursor-pointer hover:shadow-lg transition-all hover:scale-105`}
+              onClick={() => navigate("/settings")}
+              title="Paramètres du profil"
+            >
               <span className="text-white text-sm font-bold">{getInitials(userName)}</span>
             </div>
             <button 
