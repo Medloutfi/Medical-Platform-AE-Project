@@ -1,9 +1,11 @@
 import { DashboardLayout } from "../../components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
-import { MapPin, Navigation, Clock, Truck, UserCheck, Activity } from "lucide-react";
+import { MapPin, Navigation, Clock, Truck, UserCheck, Activity, UserPlus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { api } from "../../services/api";
+import { toast } from "sonner";
+import { Button } from "../../components/ui/button";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 
@@ -70,6 +72,20 @@ export default function AdminTracking() {
     };
     fetchData();
   }, []);
+
+  const handleAssignDoctor = async (interventionId: number, doctorId: string) => {
+    if (!doctorId) return;
+    try {
+      await api.patch(`/interventions/${interventionId}`, { 
+        status: "accepted", 
+        doctorId: parseInt(doctorId) 
+      });
+      setInterventions(prev => prev.map(i => i.id === interventionId ? { ...i, status: "accepted", doctorId: parseInt(doctorId) } : i));
+      toast.success("Intervention assignée au médecin avec succès !");
+    } catch (error) {
+      toast.error("Erreur lors de l'assignation");
+    }
+  };
 
   const activeInterventions = interventions.filter(i => i.status === "accepted");
   const pendingInterventions = interventions.filter(i => i.status === "pending");
@@ -266,6 +282,48 @@ export default function AdminTracking() {
                 })}
                 {activeInterventions.length === 0 && (
                   <p className="text-center text-slate-400 py-6 text-sm">Aucune mission active</p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg border-amber-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2 text-amber-700">
+                  <Clock className="w-4 h-4" /> Demandes en attente
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 max-h-[300px] overflow-y-auto">
+                {pendingInterventions.map((intervention) => (
+                  <div key={intervention.id} className="p-3 border border-amber-100 bg-amber-50/50 rounded-xl">
+                    <div className="mb-2">
+                      <p className="font-semibold text-sm text-slate-900">{intervention.patientName}</p>
+                      <p className="text-xs text-slate-500">{intervention.type} - {intervention.address}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <select 
+                        className="flex-1 text-xs rounded-lg border-slate-200 bg-white"
+                        id={`select-${intervention.id}`}
+                      >
+                        <option value="">Sélectionner un médecin</option>
+                        {doctors.filter(d => d.available).map(doc => (
+                          <option key={doc.id} value={doc.id}>{doc.name}</option>
+                        ))}
+                      </select>
+                      <Button 
+                        size="sm" 
+                        className="bg-amber-500 hover:bg-amber-600 h-8 px-2"
+                        onClick={() => {
+                          const selectEl = document.getElementById(`select-${intervention.id}`) as HTMLSelectElement;
+                          handleAssignDoctor(intervention.id, selectEl.value);
+                        }}
+                      >
+                        Assigner
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {pendingInterventions.length === 0 && (
+                  <p className="text-center text-slate-400 py-4 text-sm">Aucune demande en attente</p>
                 )}
               </CardContent>
             </Card>

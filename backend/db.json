@@ -45,7 +45,7 @@
       "rating": 4.9,
       "experience": "15 ans",
       "image": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400",
-      "available": true,
+      "available": false,
       "phone": "+212 6 12 34 56 78",
       "lat": 33.575,
       "lng": -7.595
@@ -64,7 +64,7 @@
       "lat": 33.5731,
       "lng": -7.5898,
       "urgency": false,
-      "status": "accepted",
+      "status": "completed",
       "doctorId": 1
     },
     {
@@ -81,20 +81,6 @@
       "urgency": false,
       "status": "completed",
       "doctorId": 1
-    },
-    {
-      "id": 1777388497124,
-      "patientName": "Ahmed Tazi",
-      "patientId": 1,
-      "type": "Consultation générale",
-      "description": "walo",
-      "date": "2026-04-28",
-      "time": "16:00",
-      "address": "12 Hay EL Fath",
-      "lat": 32.21778214945929,
-      "lng": -7.935718990183717,
-      "urgency": false,
-      "status": "pending"
     },
     {
       "id": 1777388556326,

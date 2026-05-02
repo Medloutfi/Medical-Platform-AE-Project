@@ -6,6 +6,8 @@ import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 import { api } from "../../services/api";
 
 export default function PatientHome() {
@@ -27,6 +29,26 @@ export default function PatientHome() {
     };
     fetchData();
   }, []);
+
+  const handleCancelIntervention = async (id: number) => {
+    try {
+      await api.delete(`/interventions/${id}`);
+      setMyInterventions(prev => prev.filter(i => i.id !== id));
+      toast.success("Intervention annulée avec succès");
+    } catch (error) {
+      toast.error("Erreur lors de l'annulation");
+    }
+  };
+
+  const handleCancelAppointment = async (id: number) => {
+    try {
+      await api.delete(`/appointments/${id}`);
+      setMyAppointments(prev => prev.filter(a => a.id !== id));
+      toast.success("Rendez-vous annulé avec succès");
+    } catch (error) {
+      toast.error("Erreur lors de l'annulation");
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; variant: any; className: string }> = {
@@ -105,9 +127,21 @@ export default function PatientHome() {
                       {getStatusBadge(intervention.status)}
                     </div>
                     <p className="text-sm text-slate-600 mb-2 line-clamp-1">{intervention.description}</p>
-                    <p className="text-xs text-slate-400 flex items-center gap-1">
-                      <MapPin className="w-3 h-3" /> {intervention.address}
-                    </p>
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs text-slate-400 flex items-center gap-1">
+                        <MapPin className="w-3 h-3" /> {intervention.address}
+                      </p>
+                      {intervention.status === 'pending' && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleCancelIntervention(intervention.id)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 px-2"
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" /> Annuler
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))}
                 {myInterventions.length === 0 && (
@@ -138,7 +172,19 @@ export default function PatientHome() {
                       </div>
                       {getStatusBadge(appointment.status)}
                     </div>
-                    <p className="text-sm text-slate-600">{appointment.reason}</p>
+                    <div className="flex justify-between items-center mt-2">
+                      <p className="text-sm text-slate-600">{appointment.reason}</p>
+                      {appointment.status === 'confirmed' && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleCancelAppointment(appointment.id)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 px-2"
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" /> Annuler
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))}
                 {myAppointments.length === 0 && (
