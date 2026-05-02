@@ -72,6 +72,32 @@ export default function InterventionRequest() {
   const [hasLocation, setHasLocation] = useState(false);
   const [selectedCareType, setSelectedCareType] = useState<string>("");
 
+  const now = new Date();
+  const defaultDate = now.toISOString().split('T')[0];
+  const defaultTime = now.toTimeString().split(':').slice(0, 2).join(':');
+
+  const [date, setDate] = useState(defaultDate);
+  const [time, setTime] = useState(defaultTime);
+  const [address, setAddress] = useState("");
+
+  const reverseGeocode = async (lat: number, lng: number) => {
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+      const data = await response.json();
+      if (data && data.display_name) {
+        setAddress(data.display_name);
+      }
+    } catch (error) {
+      console.error("Geocoding failed", error);
+    }
+  };
+
+  useEffect(() => {
+    if (hasLocation) {
+      reverseGeocode(position[0], position[1]);
+    }
+  }, [position, hasLocation]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -278,6 +304,8 @@ export default function InterventionRequest() {
                 <Input
                   id="address"
                   name="address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
                   placeholder="12 Rue Atlas, Casablanca"
                   required
                   className="h-12 rounded-xl border-slate-200"
@@ -302,6 +330,8 @@ export default function InterventionRequest() {
                     id="date"
                     name="date"
                     type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
                     required
                     min={new Date().toISOString().split('T')[0]}
                     className="h-12 rounded-xl border-slate-200"
@@ -313,6 +343,8 @@ export default function InterventionRequest() {
                     id="time"
                     name="time"
                     type="time"
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
                     required
                     className="h-12 rounded-xl border-slate-200"
                   />
