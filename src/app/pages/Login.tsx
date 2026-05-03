@@ -4,61 +4,104 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { User, Lock, Shield, Stethoscope, Heart, ArrowRight } from "lucide-react";
-import { api } from "../services/api";
+import { supabase, api } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "sonner";
+import { Mail } from "lucide-react";
 
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [username, setUsername] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [role, setRole] = useState<"patient" | "doctor" | "admin">("patient");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) {
+    if (!email || !password || (isSignUp && !name)) {
       toast.error("Veuillez remplir tous les champs");
+      return;
+    }
+
+    if (!supabase) {
+      toast.error("Supabase n'est pas configuré");
       return;
     }
 
     setIsLoading(true);
     try {
-      const users = await api.get<any[]>(`/users?username=${username}&password=${password}`);
-      if (users && users.length > 0) {
-        const user = users[0];
-        login(user);
-        toast.success(`Bienvenue, ${user.name}`);
-        navigate(`/${user.role}`);
+      if (isSignUp) {
+        // Sign Up
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+
+        if (authError) throw authError;
+
+        if (authData.user) {
+          // Create user record in our public table
+          const newUser = await api.post<any>('/users', {
+            auth_id: authData.user.id,
+            email,
+            name,
+            role,
+            username: email.split('@')[0], // fallback
+          });
+          login(newUser);
+          toast.success("Compte créé avec succès!");
+          navigate(`/${role}`);
+        }
       } else {
-        toast.error("Nom d'utilisateur ou mot de passe incorrect");
+        // Sign In
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (authError) throw authError;
+
+        if (authData.user) {
+          // Fetch user profile from public table
+          const users = await api.get<any[]>(`/users?auth_id=${authData.user.id}`);
+          if (users && users.length > 0) {
+            login(users[0]);
+            toast.success(`Bienvenue, ${users[0].name}`);
+            navigate(`/${users[0].role}`);
+          } else {
+            // Fallback for legacy test accounts
+            const legacyUsers = await api.get<any[]>(`/users?username=${email}`);
+            if (legacyUsers && legacyUsers.length > 0) {
+              login(legacyUsers[0]);
+              navigate(`/${legacyUsers[0].role}`);
+            } else {
+              toast.error("Profil utilisateur introuvable");
+            }
+          }
+        }
       }
-    } catch (error) {
-      toast.error("Erreur de connexion au serveur. Assurez-vous que le backend est lancé.");
+    } catch (error: any) {
+      toast.error(error.message || "Erreur d'authentification");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const testAccounts = [
-    { label: "Admin", username: "admin1", icon: Shield, color: "from-violet-500 to-purple-600" },
-    { label: "Médecin", username: "doctor1", icon: Stethoscope, color: "from-emerald-500 to-teal-600" },
-    { label: "Patient", username: "patient1", icon: Heart, color: "from-cyan-500 to-blue-600" },
-  ];
-
   const quickLogin = async (uname: string) => {
-    setUsername(uname);
-    setPassword("password");
+    // For legacy mock login only
     setIsLoading(true);
     try {
-      const users = await api.get<any[]>(`/users?username=${uname}&password=password`);
+      const users = await api.get<any[]>(`/users?username=${uname}`);
       if (users && users.length > 0) {
         login(users[0]);
-        toast.success(`Bienvenue, ${users[0].name}`);
+        toast.success(`Connecté via compte test: ${users[0].name}`);
         navigate(`/${users[0].role}`);
       }
     } catch (error) {
-      toast.error("Erreur de connexion au serveur");
+      toast.error("Erreur de connexion");
     } finally {
       setIsLoading(false);
     }
@@ -90,20 +133,64 @@ export default function Login() {
         {/* Login Card */}
         <Card className="shadow-2xl border-0 glass-dark bg-white/5 backdrop-blur-xl">
           <CardHeader className="text-center pb-2">
-            <CardTitle className="text-xl text-white">Connexion</CardTitle>
-            <CardDescription className="text-slate-400">Saisissez vos identifiants pour continuer</CardDescription>
+            <CardTitle className="text-xl text-white">
+              {isSignUp ? "Créer un compte" : "Connexion Sécurisée"}
+            </CardTitle>
+            <CardDescription className="text-slate-400">
+              {isSignUp ? "Rejoignez la plateforme MediCare" : "Saisissez vos identifiants pour continuer"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={handleAuth} className="space-y-4">
+              
+              {isSignUp && (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                      <User className="w-4 h-4 text-cyan-400" /> Nom complet
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="Ex: Dr. Ahmed Tazi"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="h-12 bg-white/5 border-white/10 text-white placeholder:text-slate-500 rounded-xl focus:border-cyan-400 focus:ring-cyan-400/20"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-cyan-400" /> Je suis un...
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setRole("patient")}
+                        className={`p-2 rounded-xl text-sm font-medium border transition-colors ${role === "patient" ? "bg-cyan-500/20 border-cyan-500 text-cyan-400" : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"}`}
+                      >
+                        Patient
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setRole("doctor")}
+                        className={`p-2 rounded-xl text-sm font-medium border transition-colors ${role === "doctor" ? "bg-emerald-500/20 border-emerald-500 text-emerald-400" : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"}`}
+                      >
+                        Médecin
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                  <User className="w-4 h-4 text-cyan-400" /> Nom d'utilisateur
+                  <Mail className="w-4 h-4 text-cyan-400" /> Email
                 </label>
                 <Input
-                  type="text"
-                  placeholder="Ex: patient1"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  type="email"
+                  placeholder="Ex: contact@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="h-12 bg-white/5 border-white/10 text-white placeholder:text-slate-500 rounded-xl focus:border-cyan-400 focus:ring-cyan-400/20"
                 />
               </div>
@@ -125,9 +212,9 @@ export default function Login() {
                 disabled={isLoading}
                 className="w-full h-13 text-base mt-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 rounded-xl shadow-lg shadow-cyan-500/25 transition-all hover:shadow-xl font-semibold"
               >
-                {isLoading ? "Connexion en cours..." : (
+                {isLoading ? "Traitement..." : (
                   <>
-                    Se connecter
+                    {isSignUp ? "Créer mon compte" : "Se connecter"}
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </>
                 )}
@@ -136,11 +223,24 @@ export default function Login() {
           </CardContent>
         </Card>
 
+        <div className="text-center mt-6">
+          <button 
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="text-slate-300 hover:text-white transition-colors text-sm"
+          >
+            {isSignUp ? "Déjà un compte ? Connectez-vous" : "Pas encore de compte ? S'inscrire"}
+          </button>
+        </div>
+
         {/* Quick Login */}
         <div className="mt-6 space-y-3">
           <p className="text-center text-sm text-slate-500 font-medium">Accès rapide (comptes de test)</p>
           <div className="grid grid-cols-3 gap-3">
-            {testAccounts.map((account) => {
+            {[
+              { label: "Admin", username: "admin1", icon: Shield, color: "from-violet-500 to-purple-600" },
+              { label: "Médecin", username: "doctor1", icon: Stethoscope, color: "from-emerald-500 to-teal-600" },
+              { label: "Patient", username: "patient1", icon: Heart, color: "from-cyan-500 to-blue-600" },
+            ].map((account) => {
               const Icon = account.icon;
               return (
                 <button

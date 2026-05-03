@@ -9,20 +9,28 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 import { api } from "../../services/api";
+import { DirectChat } from "../../components/DirectChat";
+import { Phone } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../../components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
 
 export default function PatientHome() {
   const navigate = useNavigate();
 
   const [myInterventions, setMyInterventions] = useState<any[]>([]);
   const [myAppointments, setMyAppointments] = useState<any[]>([]);
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const interventions = await api.get<any[]>('/interventions');
         const appointments = await api.get<any[]>('/appointments');
+        const docs = await api.get<any[]>('/doctors');
         setMyInterventions(interventions);
         setMyAppointments(appointments);
+        setDoctors(docs);
       } catch (error) {
         console.error("Failed to fetch data:", error);
       }
@@ -117,7 +125,10 @@ export default function PatientHome() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {myInterventions.slice(0, 3).map((intervention) => (
+                {myInterventions.slice(0, 3).map((intervention) => {
+                  const assignedDoctor = intervention.doctorId ? doctors.find(d => d.id === intervention.doctorId) : null;
+                  
+                  return (
                   <div key={intervention.id} className="p-4 border border-slate-100 rounded-xl hover:shadow-md hover:border-slate-200 transition-all group">
                     <div className="flex justify-between items-start mb-2">
                       <div>
@@ -127,6 +138,32 @@ export default function PatientHome() {
                       {getStatusBadge(intervention.status)}
                     </div>
                     <p className="text-sm text-slate-600 mb-2 line-clamp-1">{intervention.description}</p>
+                    
+                    {/* EN ROUTE UI */}
+                    {(intervention.status === 'accepted' || intervention.status === 'arrived') && assignedDoctor && (
+                      <div className="my-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div 
+                            className="flex items-center gap-3 flex-1 cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => setSelectedDoctor(assignedDoctor)}
+                          >
+                            <img src={assignedDoctor.image} alt={assignedDoctor.name} className="w-12 h-12 rounded-full border-2 border-white shadow-sm object-cover" />
+                            <div>
+                              <p className="font-bold text-slate-900 text-sm hover:underline">{assignedDoctor.name}</p>
+                              <p className="text-xs text-blue-600 font-medium mt-0.5">
+                                {intervention.status === 'arrived' ? '📍 Arrivé sur place' : '🚗 En route (ETA: 12 min)'}
+                              </p>
+                            </div>
+                          </div>
+                          <a href={`tel:${assignedDoctor.phone || '0600000000'}`}>
+                            <Button size="icon" variant="outline" className="rounded-full bg-white text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200">
+                              <Phone className="w-4 h-4" />
+                            </Button>
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex justify-between items-center">
                       <p className="text-xs text-slate-400 flex items-center gap-1">
                         <MapPin className="w-3 h-3" /> {intervention.address}
@@ -143,7 +180,7 @@ export default function PatientHome() {
                       )}
                     </div>
                   </div>
-                ))}
+                )})}
                 {myInterventions.length === 0 && (
                   <div className="text-center py-10">
                     <Clock className="w-10 h-10 text-slate-200 mx-auto mb-3" />
@@ -237,6 +274,49 @@ export default function PatientHome() {
           </div>
         </div>
       </div>
+      
+      {/* DIRECT CHAT TRIGGER */}
+      {myInterventions.filter(i => i.status === 'accepted' || i.status === 'arrived').length > 0 && (
+        <DirectChat 
+          interventionId={myInterventions.find(i => i.status === 'accepted' || i.status === 'arrived').id} 
+          currentUserRole="patient" 
+        />
+      )}
+
+      {/* Doctor Public Profile Modal */}
+      <Dialog open={!!selectedDoctor} onOpenChange={(open) => !open && setSelectedDoctor(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Profil Médecin</DialogTitle>
+            <DialogDescription>Informations publiques du médecin assigné</DialogDescription>
+          </DialogHeader>
+          {selectedDoctor && (
+            <div className="flex flex-col items-center p-4 space-y-4">
+              <Avatar className="w-24 h-24 border-4 border-slate-50 shadow-lg">
+                <AvatarImage src={selectedDoctor.image} />
+                <AvatarFallback className="text-2xl">{selectedDoctor.name?.[0] || 'M'}</AvatarFallback>
+              </Avatar>
+              <div className="text-center">
+                <h3 className="text-xl font-bold text-slate-900">{selectedDoctor.name}</h3>
+                <p className="text-sm text-cyan-600 font-semibold">{selectedDoctor.specialty || "Médecin généraliste"}</p>
+              </div>
+              <div className="w-full grid grid-cols-2 gap-3 mt-2">
+                <div className="bg-slate-50 p-3 rounded-xl text-center">
+                  <p className="text-xs text-slate-500 mb-1">Expérience</p>
+                  <p className="font-semibold text-slate-900">{selectedDoctor.experience || "Non spécifié"}</p>
+                </div>
+                <div className="bg-slate-50 p-3 rounded-xl text-center">
+                  <p className="text-xs text-slate-500 mb-1">Évaluation</p>
+                  <p className="font-semibold text-slate-900">⭐ {selectedDoctor.rating || "N/A"}</p>
+                </div>
+              </div>
+              <Button className="w-full mt-4" onClick={() => setSelectedDoctor(null)}>
+                Fermer
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

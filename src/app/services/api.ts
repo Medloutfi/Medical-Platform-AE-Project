@@ -16,6 +16,8 @@ const toCamelKeys = (obj: any): any => {
     patientid: 'patientId',
     doctorid: 'doctorId',
     clinicid: 'clinicId',
+    senderrole: 'senderRole',
+    interventionid: 'interventionId',
   };
   const newObj: any = {};
   for (const key in obj) {

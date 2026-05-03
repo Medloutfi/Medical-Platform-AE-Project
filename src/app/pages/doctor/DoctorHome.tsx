@@ -10,6 +10,9 @@ import { Avatar, AvatarFallback } from "../../components/ui/avatar";
 import { api } from "../../services/api";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { DirectChat } from "../../components/DirectChat";
+import { BillingModal } from "../../components/BillingModal";
+import { Phone, Ticket, CreditCard } from "lucide-react";
 
 export default function DoctorHome() {
   const [isAvailable, setIsAvailable] = useState(true);
@@ -17,25 +20,39 @@ export default function DoctorHome() {
   const [interventions, setInterventions] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
   const [doctorProfile, setDoctorProfile] = useState<any>(null);
+  const [billingOpen, setBillingOpen] = useState(false);
+
+  const fetchDoctorData = async () => {
+    try {
+      const [invs, apps, docs] = await Promise.all([
+        api.get<any[]>('/interventions'),
+        api.get<any[]>('/appointments'),
+        api.get<any[]>('/doctors')
+      ]);
+      setInterventions(invs);
+      setAppointments(apps);
+      // Hardcoded doctorId 1 for now
+      const myProfile = docs.find(d => d.id === 1) || docs[0];
+      setDoctorProfile(myProfile);
+      if (myProfile) setIsAvailable(myProfile.available);
+    } catch (error) {
+      console.error("Failed to load data:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [invs, apps, docs] = await Promise.all([
-          api.get<any[]>('/interventions'),
-          api.get<any[]>('/appointments'),
-          api.get<any[]>('/doctors')
-        ]);
-        setInterventions(invs);
-        setAppointments(apps);
-        setDoctorProfile(docs[0]);
-        if (docs[0]) setIsAvailable(docs[0].available);
-      } catch (error) {
-        console.error("Failed to load data:", error);
-      }
-    };
-    fetchData();
+    fetchDoctorData();
   }, []);
+
+  const handleArrived = async (id: number) => {
+    try {
+      await api.patch(`/interventions/${id}`, { status: "arrived" });
+      setInterventions(prev => prev.map(i => i.id === id ? { ...i, status: "arrived" } : i));
+      toast.success("Statut mis à jour : Arrivé sur place");
+    } catch (error) {
+      toast.error("Erreur lors de la mise à jour");
+    }
+  };
 
   const handleCompleteMission = async (id: number) => {
     try {
@@ -61,7 +78,7 @@ export default function DoctorHome() {
   };
 
   const pendingRequests = interventions.filter(i => i.status === "pending");
-  const activeRequest = interventions.find(i => i.status === "accepted");
+  const activeRequest = interventions.find(i => i.status === "accepted" || i.status === "arrived");
 
   return (
     <DashboardLayout role="doctor" userName="Dr. Sarah Alami" notificationCount={2}>
@@ -73,27 +90,55 @@ export default function DoctorHome() {
             <p className="text-slate-500">Gérez vos consultations et demandes d'intervention</p>
           </div>
           
-          <Card className="border-0 shadow-lg w-full md:w-80">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-500 mb-1">Statut de disponibilité</p>
-                  <p className={`font-bold text-lg ${isAvailable ? 'text-emerald-600' : 'text-slate-400'}`}>
-                    {isAvailable ? "✓ Disponible" : "Occupé(e)"}
-                  </p>
+          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+            {/* Wallet Card */}
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white min-w-[200px]">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-sm text-indigo-100 font-medium">Mon Portefeuille</p>
+                  <Ticket className="w-4 h-4 text-indigo-200" />
                 </div>
-                <div className="relative">
-                  <Switch
-                    checked={isAvailable}
-                    onCheckedChange={handleToggleAvailability}
-                  />
-                  {isAvailable && (
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full animate-pulse-soft" />
-                  )}
+                <div className="flex items-end justify-between">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-bold">
+                      {doctorProfile?.subscriptionPlan === 'premium' ? '∞' : (doctorProfile?.credits || 0)}
+                    </span>
+                    <span className="text-xs text-indigo-200">passes</span>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="secondary" 
+                    className="h-7 text-xs bg-white/20 hover:bg-white/30 text-white border-0"
+                    onClick={() => setBillingOpen(true)}
+                  >
+                    Recharger
+                  </Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg min-w-[200px]">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">Disponibilité</p>
+                    <p className={`font-bold ${isAvailable ? 'text-emerald-600' : 'text-slate-400'}`}>
+                      {isAvailable ? "✓ En ligne" : "Occupé(e)"}
+                    </p>
+                  </div>
+                  <div className="relative mt-2">
+                    <Switch
+                      checked={isAvailable}
+                      onCheckedChange={handleToggleAvailability}
+                    />
+                    {isAvailable && (
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full animate-pulse-soft" />
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Stats */}
@@ -204,18 +249,43 @@ export default function DoctorHome() {
                       <p className="font-bold text-slate-900">{activeRequest.time}</p>
                     </div>
                   </div>
-                  <div className="flex gap-3">
-                    <Button className="flex-1 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 rounded-xl shadow-lg" variant="default">
-                      <MapPin className="w-5 h-5 mr-2" />
+                  <div className="flex gap-2">
+                    <Button 
+                      className="flex-1 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 rounded-xl shadow-lg" 
+                      onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${activeRequest.lat},${activeRequest.lng}`, '_blank')}
+                    >
+                      <MapPin className="w-4 h-4 mr-2" />
                       Y aller
                     </Button>
-                    <Button 
-                      className="flex-1 h-12 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 rounded-xl shadow-lg" 
-                      onClick={() => handleCompleteMission(activeRequest.id)}
-                    >
-                      <CheckCircle className="w-5 h-5 mr-2" />
-                      Terminer
-                    </Button>
+                    <a href="tel:0600000000">
+                      <Button 
+                        className="h-12 w-12 bg-white text-blue-600 border border-blue-200 hover:bg-blue-50 rounded-xl shadow-sm" 
+                        variant="outline"
+                        title="Appeler le patient"
+                      >
+                        <Phone className="w-5 h-5" />
+                      </Button>
+                    </a>
+                  </div>
+                  <div className="flex gap-2">
+                    {activeRequest.status === 'accepted' && (
+                      <Button 
+                        className="flex-1 h-12 bg-amber-500 hover:bg-amber-600 text-white rounded-xl shadow-lg" 
+                        onClick={() => handleArrived(activeRequest.id)}
+                      >
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Arrivé sur place
+                      </Button>
+                    )}
+                    {(activeRequest.status === 'arrived' || activeRequest.status === 'accepted') && (
+                      <Button 
+                        className="flex-1 h-12 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 rounded-xl shadow-lg" 
+                        onClick={() => handleCompleteMission(activeRequest.id)}
+                      >
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Terminer
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -281,6 +351,22 @@ export default function DoctorHome() {
           </CardContent>
         </Card>
       </div>
+
+      {/* DIRECT CHAT TRIGGER */}
+      {activeRequest && (
+        <DirectChat 
+          interventionId={activeRequest.id} 
+          currentUserRole="doctor" 
+        />
+      )}
+
+      {/* BILLING MODAL */}
+      <BillingModal 
+        open={billingOpen} 
+        onOpenChange={setBillingOpen} 
+        doctorProfile={doctorProfile}
+        onSuccess={fetchDoctorData}
+      />
     </DashboardLayout>
   );
 }

@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { DashboardLayout } from "../../components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
-import { Badge } from "../../components/ui/badge";
 import { api } from "../../services/api";
+import { BillingModal } from "../../components/BillingModal";
 import { MapPin, Clock, AlertCircle, Check, X, Navigation } from "lucide-react";
 import { toast } from "sonner";
 import { MapContainer, TileLayer, Marker } from "react-leaflet";
@@ -19,22 +19,46 @@ L.Icon.Default.mergeOptions({
 
 export default function DoctorRequests() {
   const [requests, setRequests] = useState<any[]>([]);
+  const [doctorProfile, setDoctorProfile] = useState<any>(null);
+  const [billingOpen, setBillingOpen] = useState(false);
+
+  const fetchData = async () => {
+    try {
+      const [invs, docs] = await Promise.all([
+        api.get<any[]>('/interventions'),
+        api.get<any[]>('/doctors')
+      ]);
+      setRequests(invs.filter(i => i.status === "pending"));
+      // Hardcoded doctorId 1 for now
+      setDoctorProfile(docs.find(d => d.id === 1) || docs[0]);
+    } catch (error) {
+      console.error("Failed to load interventions:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchRequests = async () => {
-      try {
-        const invs = await api.get<any[]>('/interventions');
-        setRequests(invs.filter(i => i.status === "pending"));
-      } catch (error) {
-        console.error("Failed to load interventions:", error);
-      }
-    };
-    fetchRequests();
+    fetchData();
   }, []);
 
   const handleAccept = async (id: number) => {
+    if (!doctorProfile) return;
+
+    if (doctorProfile.subscriptionPlan !== 'premium' && (doctorProfile.credits || 0) <= 0) {
+      setBillingOpen(true);
+      return;
+    }
+
     try {
-      await api.patch(`/interventions/${id}`, { status: "accepted", doctorId: 1 });
+      // Patch intervention
+      await api.patch(`/interventions/${id}`, { status: "accepted", doctorId: doctorProfile.id });
+      
+      // Decrement credit if not premium
+      if (doctorProfile.subscriptionPlan !== 'premium') {
+        const newCredits = (doctorProfile.credits || 0) - 1;
+        await api.patch(`/doctors/${doctorProfile.id}`, { credits: newCredits });
+        setDoctorProfile({ ...doctorProfile, credits: newCredits });
+      }
+
       setRequests(requests.filter(r => r.id !== id));
       toast.success("Demande acceptée! Mission ajoutée à votre agenda.");
     } catch (e) {
@@ -178,6 +202,13 @@ export default function DoctorRequests() {
           )}
         </div>
       </div>
+
+      <BillingModal 
+        open={billingOpen} 
+        onOpenChange={setBillingOpen} 
+        doctorProfile={doctorProfile}
+        onSuccess={fetchData}
+      />
     </DashboardLayout>
   );
 }

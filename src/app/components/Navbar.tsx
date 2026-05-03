@@ -5,7 +5,8 @@ import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "./ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useState, useEffect } from "react";
 import { api } from "../services/api";
 interface NavbarProps {
@@ -18,8 +19,9 @@ export function Navbar({ userName, role, notificationCount = 0 }: NavbarProps) {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<{title: string, type: string, url: string}[]>([]);
+  const [searchResults, setSearchResults] = useState<{title: string, type: string, url: string, data?: any}[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -60,7 +62,7 @@ export function Navbar({ userName, role, notificationCount = 0 }: NavbarProps) {
           if (p.name.toLowerCase().includes(q)) results.push({ title: p.name, type: 'Patient', url: role === 'admin' ? '/admin/patients' : '#' });
         });
         docs.forEach(d => {
-          if (d.name.toLowerCase().includes(q) || d.specialty?.toLowerCase().includes(q)) results.push({ title: d.name, type: 'Médecin', url: role === 'admin' ? '/admin/doctors' : '#' });
+          if (d.name.toLowerCase().includes(q) || d.specialty?.toLowerCase().includes(q)) results.push({ title: d.name, type: 'Médecin', url: role === 'admin' ? '/admin/doctors' : '#', data: d });
         });
         invs.forEach(i => {
           if (i.patientName.toLowerCase().includes(q) || i.type.toLowerCase().includes(q)) {
@@ -132,7 +134,13 @@ export function Navbar({ userName, role, notificationCount = 0 }: NavbarProps) {
                 ) : (
                   <div className="space-y-1">
                     {searchResults.map((result, idx) => (
-                      <div key={idx} onClick={() => { if (result.url !== '#') navigate(result.url); }} className="p-3 hover:bg-slate-50 rounded-xl cursor-pointer flex justify-between items-center transition-colors">
+                      <div key={idx} onClick={() => { 
+                        if (result.type === 'Médecin' && role !== 'admin') {
+                          setSelectedDoctor(result.data);
+                        } else if (result.url !== '#') {
+                          navigate(result.url); 
+                        }
+                      }} className="p-3 hover:bg-slate-50 rounded-xl cursor-pointer flex justify-between items-center transition-colors">
                         <span className="font-medium text-slate-800">{result.title}</span>
                         <Badge variant="outline" className="text-xs bg-white">{result.type}</Badge>
                       </div>
@@ -223,6 +231,44 @@ export function Navbar({ userName, role, notificationCount = 0 }: NavbarProps) {
           </div>
         </div>
       </div>
+
+      {/* Doctor Public Profile Modal */}
+      <Dialog open={!!selectedDoctor} onOpenChange={(open) => !open && setSelectedDoctor(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Profil Médecin</DialogTitle>
+            <DialogDescription>Informations publiques du professionnel de santé</DialogDescription>
+          </DialogHeader>
+          {selectedDoctor && (
+            <div className="flex flex-col items-center p-4 space-y-4">
+              <Avatar className="w-24 h-24 border-4 border-slate-50 shadow-lg">
+                <AvatarImage src={selectedDoctor.image} />
+                <AvatarFallback className="text-2xl">{selectedDoctor.name[0]}</AvatarFallback>
+              </Avatar>
+              <div className="text-center">
+                <h3 className="text-xl font-bold text-slate-900">{selectedDoctor.name}</h3>
+                <p className="text-sm text-cyan-600 font-semibold">{selectedDoctor.specialty || "Médecin"}</p>
+              </div>
+              <div className="w-full grid grid-cols-2 gap-3 mt-2">
+                <div className="bg-slate-50 p-3 rounded-xl text-center">
+                  <p className="text-xs text-slate-500 mb-1">Expérience</p>
+                  <p className="font-semibold text-slate-900">{selectedDoctor.experience || "Non spécifié"}</p>
+                </div>
+                <div className="bg-slate-50 p-3 rounded-xl text-center">
+                  <p className="text-xs text-slate-500 mb-1">Évaluation</p>
+                  <p className="font-semibold text-slate-900">⭐ {selectedDoctor.rating || "N/A"}</p>
+                </div>
+                <div className="bg-emerald-50 p-3 rounded-xl text-center col-span-2">
+                  <p className="text-xs text-emerald-600 mb-1">Disponibilité</p>
+                  <p className="font-bold text-emerald-700">
+                    {selectedDoctor.available ? "✅ Disponible pour urgences" : "❌ Actuellement occupé(e)"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
