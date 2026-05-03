@@ -13,9 +13,11 @@ import { DirectChat } from "../../components/DirectChat";
 import { Phone } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../../components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function PatientHome() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [myInterventions, setMyInterventions] = useState<any[]>([]);
   const [myAppointments, setMyAppointments] = useState<any[]>([]);
@@ -24,10 +26,13 @@ export default function PatientHome() {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!user) return;
       try {
-        const interventions = await api.get<any[]>('/interventions');
-        const appointments = await api.get<any[]>('/appointments');
-        const docs = await api.get<any[]>('/doctors');
+        // Handle both legacy (patientId=1) and new users (patientId=user.id)
+        const queryId = user.patientId || user.id;
+        const interventions = await api.get<any[]>(`/interventions?patientId=${queryId}`);
+        const appointments = await api.get<any[]>(`/appointments?patientId=${queryId}`);
+        const docs = await api.get<any[]>(`/doctors`);
         setMyInterventions(interventions);
         setMyAppointments(appointments);
         setDoctors(docs);
@@ -36,7 +41,7 @@ export default function PatientHome() {
       }
     };
     fetchData();
-  }, []);
+  }, [user]);
 
   const handleCancelIntervention = async (id: number) => {
     try {
@@ -70,7 +75,7 @@ export default function PatientHome() {
   };
 
   return (
-    <DashboardLayout role="patient" userName="Ahmed Tazi" notificationCount={3}>
+    <DashboardLayout role="patient" userName={user?.name || "Patient"} notificationCount={3}>
       <div className="space-y-8">
         {/* Welcome Header */}
         <div className="animate-fade-in-up">

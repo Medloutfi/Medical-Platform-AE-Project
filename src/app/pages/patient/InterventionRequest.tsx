@@ -12,6 +12,7 @@ import { api } from "../../services/api";
 import { toast } from "sonner";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import L from "leaflet";
+import { useAuth } from "../../contexts/AuthContext";
 
 // Fix leaflet default marker icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -63,6 +64,7 @@ function MapClickHandler({ setPosition }: { setPosition: (pos: [number, number])
 }
 
 export default function InterventionRequest() {
+  const { user } = useAuth();
   const [careTypes, setCareTypes] = useState<any[]>([]);
   const [isUrgent, setIsUrgent] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -142,8 +144,8 @@ export default function InterventionRequest() {
     try {
       await api.post('/interventions', {
         id: Date.now(),
-        patientName: "Ahmed Tazi",
-        patientId: 1,
+        patientName: user?.name || "Patient",
+        patientId: user?.patientId || user?.id,
         type: selectedCareType,
         description: formData.get('description'),
         date: formData.get('date'),
@@ -173,7 +175,7 @@ export default function InterventionRequest() {
   ];
 
   return (
-    <DashboardLayout role="patient" userName="Ahmed Tazi" notificationCount={3}>
+    <DashboardLayout role="patient" userName={user?.name || "Patient"} notificationCount={3}>
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <div className="animate-fade-in-up">

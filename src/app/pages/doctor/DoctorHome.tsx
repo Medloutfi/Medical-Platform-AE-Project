@@ -13,8 +13,10 @@ import { toast } from "sonner";
 import { DirectChat } from "../../components/DirectChat";
 import { BillingModal } from "../../components/BillingModal";
 import { Phone, Ticket, CreditCard } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function DoctorHome() {
+  const { user } = useAuth();
   const [isAvailable, setIsAvailable] = useState(true);
   const navigate = useNavigate();
   const [interventions, setInterventions] = useState<any[]>([]);
@@ -23,18 +25,21 @@ export default function DoctorHome() {
   const [billingOpen, setBillingOpen] = useState(false);
 
   const fetchDoctorData = async () => {
+    if (!user) return;
     try {
+      const queryId = user.doctorId || user.id;
       const [invs, apps, docs] = await Promise.all([
-        api.get<any[]>('/interventions'),
-        api.get<any[]>('/appointments'),
+        api.get<any[]>(`/interventions`),
+        api.get<any[]>(`/appointments`),
         api.get<any[]>('/doctors')
       ]);
-      setInterventions(invs);
-      setAppointments(apps);
-      // Hardcoded doctorId 1 for now
-      const myProfile = docs.find(d => d.id === 1) || docs[0];
+      
+      setInterventions(invs.filter(i => i.doctorId === queryId || i.status === "pending"));
+      setAppointments(apps.filter(a => a.doctorId === queryId));
+      
+      const myProfile = docs.find(d => d.id === queryId) || { id: queryId, name: user.name, rating: "N/A", experience: "N/A", status: "Disponible" };
       setDoctorProfile(myProfile);
-      if (myProfile) setIsAvailable(myProfile.available);
+      if (myProfile.available !== undefined) setIsAvailable(myProfile.available);
     } catch (error) {
       console.error("Failed to load data:", error);
     }
@@ -81,7 +86,7 @@ export default function DoctorHome() {
   const activeRequest = interventions.find(i => i.status === "accepted" || i.status === "arrived");
 
   return (
-    <DashboardLayout role="doctor" userName="Dr. Sarah Alami" notificationCount={2}>
+    <DashboardLayout role="doctor" userName={user?.name || "Médecin"} notificationCount={2}>
       <div className="space-y-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 animate-fade-in-up">
@@ -194,8 +199,8 @@ export default function DoctorHome() {
                   )}
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-slate-900">{doctorProfile?.name || "Dr. Sarah Alami"}</h3>
-                  <p className="text-slate-500 mb-3">{doctorProfile?.specialty || "Médecin généraliste"}</p>
+                  <h3 className="text-xl font-bold text-slate-900">{doctorProfile?.name || user?.name}</h3>
+                  <p className="text-slate-500 mb-3">{doctorProfile?.specialty || "Médecin"}</p>
                   <div className="flex gap-2 flex-wrap">
                     <Badge className={isAvailable ? "bg-emerald-100 text-emerald-700 border-0" : "bg-slate-100 text-slate-600 border-0"}>
                       {isAvailable ? "✓ Disponible" : "Occupé(e)"}

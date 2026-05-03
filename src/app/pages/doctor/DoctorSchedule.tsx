@@ -15,12 +15,9 @@ export default function DoctorSchedule() {
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        const data = await api.get<any[]>('/appointments');
-        if (user?.doctorId) {
-          setAppointments(data.filter(app => app.doctorId === user.doctorId));
-        } else {
-          setAppointments(data);
-        }
+        const queryId = user.doctorId || user.id;
+        const data = await api.get<any[]>(`/appointments?doctorId=${queryId}`);
+        setAppointments(data);
       } catch (error) {
         console.error("Failed to fetch appointments:", error);
       }
@@ -35,7 +32,7 @@ export default function DoctorSchedule() {
   };
 
   return (
-    <DashboardLayout role="doctor" userName="Dr. Sarah Alami" notificationCount={2}>
+    <DashboardLayout role="doctor" userName={user?.name || "Médecin"} notificationCount={2}>
       <div className="space-y-6">
         <div className="animate-fade-in-up">
           <h1 className="text-3xl font-bold text-slate-900 mb-1">Mon Agenda</h1>

@@ -10,6 +10,7 @@ export interface User {
   name: string;
   doctorId?: number;
   patientId?: number;
+  email?: string;
 }
 
 interface AuthContextType {

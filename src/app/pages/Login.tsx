@@ -43,6 +43,29 @@ export default function Login() {
         if (authError) throw authError;
 
         if (authData.user) {
+          let doctorId = undefined;
+          let patientId = undefined;
+
+          // Auto-create associated profile based on role
+          if (role === 'doctor') {
+            const newDoc = await api.post<any>('/doctors', {
+              name,
+              specialty: "Généraliste",
+              rating: 5.0,
+              experience: "0 ans",
+              available: true,
+              subscriptionPlan: "standard",
+              credits: 10
+            });
+            doctorId = newDoc.id;
+          } else if (role === 'patient') {
+            const newPat = await api.post<any>('/patients', {
+              name,
+              email
+            });
+            patientId = newPat.id;
+          }
+
           // Create user record in our public table
           const newUser = await api.post<any>('/users', {
             auth_id: authData.user.id,
@@ -50,6 +73,9 @@ export default function Login() {
             name,
             role,
             username: email.split('@')[0], // fallback
+            password: '[SECURED_BY_SUPABASE]', // Fallback pour contourner la contrainte NOT NULL de l'ancienne base de données
+            doctorId,
+            patientId
           });
           login(newUser);
           toast.success("Compte créé avec succès!");

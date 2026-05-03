@@ -8,6 +8,7 @@ import { api } from "../../services/api";
 import { toast } from "sonner";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
+import { useAuth } from "../../contexts/AuthContext";
 
 // Fix leaflet default marker icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -43,6 +44,7 @@ const doctorIcon = new L.DivIcon({
 });
 
 export default function DoctorMap() {
+  const { user } = useAuth();
   const [interventions, setInterventions] = useState<any[]>([]);
   const [doctors, setDoctors] = useState<any[]>([]);
   const [filterUrgent, setFilterUrgent] = useState(false);
@@ -73,9 +75,11 @@ export default function DoctorMap() {
     : pendingInterventions;
 
   const handleAccept = async (id: number) => {
+    if (!user) return;
+    const queryId = user.doctorId || user.id;
     try {
-      await api.patch(`/interventions/${id}`, { status: "accepted", doctorId: 1 });
-      setInterventions(interventions.map(i => i.id === id ? { ...i, status: "accepted", doctorId: 1 } : i));
+      await api.patch(`/interventions/${id}`, { status: "accepted", doctorId: queryId });
+      setInterventions(interventions.map(i => i.id === id ? { ...i, status: "accepted", doctorId: queryId } : i));
       setSelectedIntervention(null);
       toast.success("Mission acceptée! Navigation disponible.");
     } catch (e) {
@@ -98,7 +102,7 @@ export default function DoctorMap() {
   const mapCenter: [number, number] = [33.5731, -7.5898];
 
   return (
-    <DashboardLayout role="doctor" userName="Dr. Sarah Alami" notificationCount={2}>
+    <DashboardLayout role="doctor" userName={user?.name || "Médecin"} notificationCount={2}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 animate-fade-in-up">

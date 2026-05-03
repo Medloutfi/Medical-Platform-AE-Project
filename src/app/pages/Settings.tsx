@@ -7,6 +7,11 @@ import { useState, useEffect } from "react";
 import { api } from "../services/api";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default function Settings() {
   const { user, logout, login } = useAuth();
@@ -28,6 +33,7 @@ export default function Settings() {
         ...prev,
         name: user.name,
         username: user.username,
+        email: user.email || "",
       }));
       
       // Fetch additional profile data based on role
@@ -58,11 +64,19 @@ export default function Settings() {
   const handleSave = async () => {
     setLoading(true);
     try {
-      // Update user account details
-      const userUpdate = { ...user, name: formData.name, username: formData.username };
+      // If user typed a new password, update it securely in Supabase Auth
       if (formData.password) {
-        (userUpdate as any).password = formData.password;
+        const { error: authError } = await supabase.auth.updateUser({ password: formData.password });
+        if (authError) {
+          toast.error("Erreur de sécurité lors de la mise à jour du mot de passe.");
+          setLoading(false);
+          return;
+        }
       }
+
+      // Update user account details (public profile)
+      const userUpdate = { ...user, name: formData.name, username: formData.username };
+      // We don't overwrite password in the `users` table anymore (it stays [SECURED_BY_SUPABASE])
       await api.put(`/users/${user.id}`, userUpdate);
       
       // Update role-specific details
@@ -189,24 +203,22 @@ export default function Settings() {
                       </div>
                     </div>
 
-                    {(user.role === "patient" || user.role === "doctor") && (
-                      <div className="space-y-5">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                          {user.role === "patient" && (
-                            <div className="space-y-2">
-                              <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                                <Mail className="w-4 h-4 text-slate-400" /> Email
-                              </label>
-                              <input
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleInputChange}
-                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                              />
-                            </div>
-                          )}
-                          <div className="space-y-2">
+                    <div className="space-y-5">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                          <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                            <Mail className="w-4 h-4 text-slate-400" /> Email
+                          </label>
+                          <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            disabled
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-100 text-slate-500 cursor-not-allowed focus:outline-none transition-all"
+                            title="L'email ne peut pas être modifié ici."
+                          />
+                        </div>
+                        <div className="space-y-2">
                             <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                               <Phone className="w-4 h-4 text-slate-400" /> Téléphone
                             </label>
@@ -232,8 +244,7 @@ export default function Settings() {
                           />
                         </div>
                       </div>
-                    )}
-                  </div>
+                    </div>
                 )}
 
                 {activeTab === "security" && (

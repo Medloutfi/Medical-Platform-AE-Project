@@ -5,26 +5,30 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { TrendingUp, Users, Award, Clock, MapPin } from "lucide-react";
 import { useState, useEffect } from "react";
 import { api } from "../../services/api";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function DoctorHistory() {
+  const { user } = useAuth();
   const [completedInterventions, setCompletedInterventions] = useState<any[]>([]);
   const [doctorProfile, setDoctorProfile] = useState<any>(null);
 
   useEffect(() => {
     const fetchHistory = async () => {
+      if (!user) return;
       try {
+        const queryId = user.doctorId || user.id;
         const [invs, docs] = await Promise.all([
-          api.get<any[]>('/interventions'),
+          api.get<any[]>(`/interventions?doctorId=${queryId}`),
           api.get<any[]>('/doctors')
         ]);
         setCompletedInterventions(invs.filter(i => i.status === "completed"));
-        setDoctorProfile(docs[0]);
+        setDoctorProfile(docs.find(d => d.id === queryId) || { id: queryId, name: user.name, rating: "N/A", experience: "N/A" });
       } catch (error) {
         console.error("Failed to load history:", error);
       }
     };
     fetchHistory();
-  }, []);
+  }, [user]);
 
   // Compute performanceData from completed interventions based on date
   const monthlyStats = completedInterventions.reduce((acc: any, inv) => {
@@ -44,7 +48,7 @@ export default function DoctorHistory() {
   const anneesExp = doctorProfile?.experience ? doctorProfile.experience.split(' ')[0] : "0";
 
   return (
-    <DashboardLayout role="doctor" userName="Dr. Sarah Alami" notificationCount={2}>
+    <DashboardLayout role="doctor" userName={user?.name || "Médecin"} notificationCount={2}>
       <div className="space-y-8">
         <div className="animate-fade-in-up">
           <h1 className="text-3xl font-bold text-slate-900 mb-1">Historique & Performance</h1>

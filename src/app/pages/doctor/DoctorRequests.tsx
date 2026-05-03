@@ -8,6 +8,7 @@ import { MapPin, Clock, AlertCircle, Check, X, Navigation } from "lucide-react";
 import { toast } from "sonner";
 import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import L from "leaflet";
+import { useAuth } from "../../contexts/AuthContext";
 
 // Fix leaflet icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -16,21 +17,21 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
-
 export default function DoctorRequests() {
+  const { user } = useAuth();
   const [requests, setRequests] = useState<any[]>([]);
   const [doctorProfile, setDoctorProfile] = useState<any>(null);
   const [billingOpen, setBillingOpen] = useState(false);
-
   const fetchData = async () => {
+    if (!user) return;
     try {
+      const queryId = user.doctorId || user.id;
       const [invs, docs] = await Promise.all([
         api.get<any[]>('/interventions'),
         api.get<any[]>('/doctors')
       ]);
       setRequests(invs.filter(i => i.status === "pending"));
-      // Hardcoded doctorId 1 for now
-      setDoctorProfile(docs.find(d => d.id === 1) || docs[0]);
+      setDoctorProfile(docs.find(d => d.id === queryId) || { id: queryId, name: user.name, subscriptionPlan: 'standard', credits: 0 });
     } catch (error) {
       console.error("Failed to load interventions:", error);
     }
@@ -77,7 +78,7 @@ export default function DoctorRequests() {
   };
 
   return (
-    <DashboardLayout role="doctor" userName="Dr. Sarah Alami" notificationCount={2}>
+    <DashboardLayout role="doctor" userName={user?.name || "Médecin"} notificationCount={2}>
       <div className="space-y-6">
         <div className="animate-fade-in-up">
           <h1 className="text-3xl font-bold text-slate-900 mb-1">Demandes d'intervention</h1>

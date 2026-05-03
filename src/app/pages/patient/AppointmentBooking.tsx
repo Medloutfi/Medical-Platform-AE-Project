@@ -9,8 +9,10 @@ import { api } from "../../services/api";
 import { toast } from "sonner";
 import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
 import confetti from "canvas-confetti";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function AppointmentBooking() {
+  const { user } = useAuth();
   const [selectedClinic, setSelectedClinic] = useState<number | null>(null);
   const [selectedDoctor, setSelectedDoctor] = useState<number | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>("");
@@ -66,8 +68,8 @@ export default function AppointmentBooking() {
     try {
       await api.post('/appointments', {
         id: Date.now(),
-        patientName: "Ahmed Tazi",
-        patientId: 1,
+        patientName: user?.name || "Patient",
+        patientId: user?.patientId || user?.id,
         doctorId: selectedDoctor,
         clinicId: selectedClinic,
         date: selectedDate,
@@ -104,7 +106,7 @@ export default function AppointmentBooking() {
   ];
 
   return (
-    <DashboardLayout role="patient" userName="Ahmed Tazi" notificationCount={3}>
+    <DashboardLayout role="patient" userName={user?.name || "Patient"} notificationCount={3}>
       <div className="max-w-5xl mx-auto space-y-8">
         {/* Header */}
         <div className="animate-fade-in-up">

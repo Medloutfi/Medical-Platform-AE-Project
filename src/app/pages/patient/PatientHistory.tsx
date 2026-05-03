@@ -1,12 +1,14 @@
 import { DashboardLayout } from "../../components/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import { Card, CardContent } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
 import { Clock, Calendar, MapPin, CheckCircle, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { api } from "../../services/api";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function PatientHistory() {
+  const { user } = useAuth();
   const [interventions, setInterventions] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
   const [doctors, setDoctors] = useState<any[]>([]);
@@ -14,14 +16,16 @@ export default function PatientHistory() {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!user) return;
       try {
-        const [inv, appts, docs, clins] = await Promise.all([
-          api.get<any[]>('/interventions'),
-          api.get<any[]>('/appointments'),
+        const queryId = user.patientId || user.id;
+        const [invs, appts, docs, clins] = await Promise.all([
+          api.get<any[]>(`/interventions?patientId=${queryId}`),
+          api.get<any[]>(`/appointments?patientId=${queryId}`),
           api.get<any[]>('/doctors'),
           api.get<any[]>('/clinics')
         ]);
-        setInterventions(inv);
+        setInterventions(invs);
         setAppointments(appts);
         setDoctors(docs);
         setClinics(clins);
@@ -30,7 +34,7 @@ export default function PatientHistory() {
       }
     };
     fetchData();
-  }, []);
+  }, [user]);
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; variant: any; className: string; icon: any }> = {
@@ -44,7 +48,7 @@ export default function PatientHistory() {
   };
 
   return (
-    <DashboardLayout role="patient" userName="Ahmed Tazi" notificationCount={3}>
+    <DashboardLayout role="patient" userName={user?.name || "Patient"} notificationCount={3}>
       <div className="space-y-6">
         <div className="animate-fade-in-up">
           <h1 className="text-3xl font-bold text-slate-900 mb-1">Historique</h1>
